@@ -1,8 +1,12 @@
 # PCA---Proyecto-SciPy
 # PHOTOCONDUCTIVE ANTENNA
+✨ Autoras ✨
+Lucía Cervantes Schamun
+Candela Lopez Porto
+
 ## Simulación de juntura GaAs–Au (Schottky–Óhmico)
 
-Este proyecto evalúa el modelo unidimensional de un semiconductor GaAs con dos contactos metálicos de Au: un contacto tipo Schottky en $x = 0$ y un contacto Óhmico en $x = L$.
+Este proyecto evalúa el modelo unidimensional de un semiconductor III-V (GaAs) con dos contactos metálicos de Au: un contacto tipo Schottky en $x = 0$ y un contacto Óhmico en $x = L$.
 El objetivo es calcular la corriente entre contactos en función de la tensión aplicada,
 siguiendo la dinámica de portadores de carga (electrones y huecos) en el semiconductor.
 
@@ -25,4 +29,4 @@ Las ecuaciones se discretizan en una grilla espacio-temporal mediante diferencia
 
 La condición inicial es la densidad de equilibrio $n_e^0(x)$ sin tensión aplicada.
 
-Para ver el detalle de las ecuaciones y modelos considerados ingresar a > Notebook: [`proyecto_final.ipynb`](proyecto_final.ipynb)
+Para ver el detalle de las ecuaciones utilizados y modelos considerados ingresar a > Notebook: [`proyecto_final.ipynb`](proyecto_final.ipynb)
