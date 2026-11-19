@@ -5,23 +5,23 @@ from scipy.linalg import solve_banded
 import parametros as param
 
 
-def resolver_poisson(n, p, C, phi0, phiN, dx, eps_r):
+def resolver_poisson(n, p, phi0, phiN, dx):
     """
     Resuelve Poisson en los nodos interiores.
 
     Recibe:
         n, p   : arrays de largo N+1, densidades de electrones y huecos [cm⁻³]
-        C      : array de largo N+1, perfil de dopaje [cm⁻³]
         phi0   : potencial en x=0 [V]
         phiN   : potencial en x=L [V]
         dx     : paso espacial [cm]
-        eps_r  : permitividad relativa
 
     Devuelve:
         phi    : array de largo N+1 con el potencial en toda la grilla [V]
     """
     N = len(n) - 1
-    C = np.broadcast_to(C, n.shape)
+    C = param.C
+    if np.ndim(C) == 0:
+        C = np.full(n.shape, C)
     b = dx**2 * param.e / (param.epsilon_0 * param.epsilon_r) * (p[1:-1] - n[1:-1] + C[1:-1])
     b[0]  += phi0          # contorno Schottky
     b[-1] += phiN          # contorno óhmico
