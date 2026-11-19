@@ -1,66 +1,102 @@
-#codigo que revisa que los parametros del material tengan sentido físico
-
 # validacion_param.py
 """Chequeos de consistencia de parámetros antes de correr la simulación."""
 import warnings
 import numpy as np
+from typing import Annotated
+from pydantic import TypeAdapter, Field
+from pydantic import ValidationError
 
-K_B = 8.617e-5  # constante de Boltzmann [eV/K]
+# ── Adaptadores de tipo reutilizables ─────────────────────────────────────────
+# TypeAdapter valida un valor suelto con las reglas de Pydantic,
+# sin necesidad de definir una clase BaseModel.
+_pos_float = TypeAdapter(Annotated[float, Field(gt=0)])   # float estrictamente positivo
+_nn_float  = TypeAdapter(Annotated[float, Field(ge=0)])   # float no negativo
+_int_ge3   = TypeAdapter(Annotated[int,   Field(ge=3)])   # entero >= 3
 
 
-def _positivo(nombre, valor):
-    if not np.isfinite(valor) or valor <= 0:
-        raise ValueError(f"{nombre} debe ser finito y > 0 (recibido {valor!r})")
-
+# ── Validación de parámetros físicos ─────────────────────────────────────────
 
 def validar_fisicos(p):
-    """p: módulo o objeto con los atributos de parametros.py."""
-    for nombre in ("mu_e", "D_e", "tau_e", "epsilon_r", "E_g", "T", "L"):
-        _positivo(nombre, getattr(p, nombre))
-    if p.C < 0:
-        raise ValueError(f"El dopaje C no puede ser negativo (recibido {p.C})")
-    if not isinstance(p.N, (int, np.integer)) or p.N < 3:
+    """Verifica que los atributos del módulo p tengan valores físicamente válidos."""
+    campos_positivos = {
+        "mu_e": p.mu_e, "D_e": p.D_e, "tau_e": p.tau_e,
+        "epsilon_r": p.epsilon_r, "E_g": p.E_g,
+        "m_eeff": p.m_eeff, "m_heff": p.m_heff,
+        "T": p.T, "L": p.L, "k_B": p.k_B,
+    }
+    for nombre, valor in campos_positivos.items():
+        try:
+            _pos_float.validate_python(float(valor))
+        except ValidationError:
+            raise ValueError(f"{nombre} debe ser finito y > 0 (recibido {valor!r})")
+
+    try:
+        _nn_float.validate_python(float(p.C))
+    except ValidationError:
+        raise ValueError(f"C (dopaje) no puede ser negativo (recibido {p.C!r})")
+
+    try:
+        _int_ge3.validate_python(int(p.N))
+    except ValidationError:
         raise ValueError(f"N debe ser un entero >= 3 (recibido {p.N!r})")
 
 
-def validar_einstein(mu, D, T, rtol=0.1):
-    """Relación de Einstein: D = mu * kT/q. Avisa si D y mu son inconsistentes."""
-    D_esperado = mu * K_B * T
-    err = abs(D - D_esperado) / D_esperado
+# ── Relación de Einstein ──────────────────────────────────────────────────────
+
+def validar_einstein(p, rtol=0.1):
+    """D_e debería ser ≈ mu_e · k_B · T. Avisa si la discrepancia supera rtol."""
+    D_esperado = p.mu_e * p.k_B * p.T
+    err = abs(p.D_e - D_esperado) / D_esperado
     if err > rtol:
-        warnings.warn(f"D_e={D} difiere {err:.1%} de mu*kT/q={D_esperado:.1f} cm²/s")
+        warnings.warn(
+            f"D_e={p.D_e} difiere {err:.1%} de mu_e·k_B·T={D_esperado:.1f} cm²/s"
+        )
     return err
 
-# revisar esta función
-def validar_estabilidad(D, dt, dx, mu=None, E_max=None):
-    """Estabilidad del esquema FTCS de continuidad.py."""
-    r = D * dt / dx**2
+
+# ── Estabilidad del esquema numérico ─────────────────────────────────────────
+
+def validar_estabilidad(p, dt, mu=None, E_max=None):
+    """
+    Verifica D_e·dt/dx² ≤ 1/2.
+    Opcionalmente revisa el número de Péclet de malla.
+    Devuelve el valor de D_e·dt/dx².
+    """
+    _pos_float.validate_python(float(dt))   # dt también debe ser positivo
+
+    dx = p.L / p.N
+    r  = p.D_e * dt / dx**2
     if r > 0.5:
         raise ValueError(
-            f"Inestable: D*dt/dx² = {r:.3g} > 1/2. "
-            f"Usá dt <= {0.5 * dx**2 / D:.3e} s"
+            f"Esquema inestable: D_e·dt/dx² = {r:.3g} > 1/2. "
+            f"Usá dt ≤ {0.5 * dx**2 / p.D_e:.3e} s"
         )
-    # Péclet de malla: con diferencias centradas, si es > 1 aparecen oscilaciones
     if mu is not None and E_max is not None:
-        Pe = mu * abs(E_max) * dx / (2 * D)
+        Pe = mu * abs(E_max) * dx / (2 * p.D_e)
         if Pe > 1:
-            warnings.warn(f"Péclet de malla = {Pe:.3g} > 1: posibles oscilaciones; refiná dx")
+            warnings.warn(
+                f"Péclet de malla = {Pe:.3g} > 1: "
+                f"posibles oscilaciones; refiná dx o usá Scharfetter–Gummel"
+            )
     return r
 
+
+# ── Validación de arrays en tiempo de ejecución ───────────────────────────────
 
 def validar_arrays(N, **arrays):
     """Uso: validar_arrays(N, n=n, phi=phi, G=G)"""
     for nombre, a in arrays.items():
         a = np.asarray(a)
         if a.shape != (N + 1,):
-            raise ValueError(f"{nombre} tiene forma {a.shape}, se esperaba ({N + 1},)")
+            raise ValueError(f"{nombre} tiene forma {a.shape}, se esperaba ({N+1},)")
         if not np.all(np.isfinite(a)):
             raise ValueError(f"{nombre} contiene NaN o inf")
 
 
-def validacion_de_parametros(p, dt):
-    dx = p.L / p.N
+# ── Punto de entrada único ────────────────────────────────────────────────────
+
+def validar(p, dt):
+    """Llama a todas las validaciones en orden. Uso: validar(param, dt)"""
     validar_fisicos(p)
-    validar_einstein(p.mu_e, p.D_e, p.T)
-    _positivo("dt", dt)
-    return validar_estabilidad(p.D_e, dt, dx)
+    validar_einstein(p)
+    return validar_estabilidad(p, dt)
