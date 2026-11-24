@@ -18,4 +18,4 @@ k_B = 8.617333262e-5             # constante de Boltzmann [eV/K]
 # parámetros condicionales
 T = 300                          # temperatura [K]
 L = 1e-4                         # longitud [cm] (un micrón)
-N = 1000                         # número de pasos
+N = 200                         # número de pasos
