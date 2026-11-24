@@ -1,0 +1,15 @@
+# ====================
+# Constantes Físicas
+# ====================
+
+k_B = 8.617333262e-5             # constante de Boltzmann [eV/K]
+h     = 6.626e-34   # constante de Planck [J·s]
+k_BJ  = 1.381e-23   # constante de Boltzmann [J/K]
+
+# =========================================
+# Parámetros condicionales de la simulación
+# =========================================
+
+T = 300                          # temperatura [K]
+L = 1e-4                         # longitud [cm] (un micrón)
+N = 200                         # número de pasos

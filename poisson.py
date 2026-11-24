@@ -2,10 +2,8 @@
 import numpy as np
 from scipy.linalg import solve_banded
 
-import parametros as param
 
-
-def resolver_poisson(n, p, phi0, phiN, dx):
+def resolver_poisson(n, p, phi0, phiN, dx, param):
     """
     Resuelve Poisson en los nodos interiores.
 
@@ -14,6 +12,8 @@ def resolver_poisson(n, p, phi0, phiN, dx):
         phi0   : potencial en x=0 [V]
         phiN   : potencial en x=L [V]
         dx     : paso espacial [cm]
+        param  : objeto con los parámetros leídos en main.py
+                 (usa param.C, param.e, param.epsilon_0, param.epsilon_r)
 
     Devuelve:
         phi    : array de largo N+1 con el potencial en toda la grilla [V]

@@ -6,20 +6,74 @@ hasta alcanzar el estado estacionario para cada tensión aplicada.
 Salida: curva I-V y perfiles de portadores / potencial.
 """
 
+import ast
+import operator
+from pathlib import Path
+from types import SimpleNamespace
+
 import numpy as np
 import matplotlib.pyplot as plt
 
-import parametros as param
 from validacion_param import validar, validar_arrays
 from continuidad import paso_continuidad
 from poisson import resolver_poisson
 
-# ── Constantes físicas no incluidas en parametros.py ────────────────
-h     = 6.626e-34   # constante de Planck [J·s]
-k_BJ  = 1.381e-23   # constante de Boltzmann [J/K]
-phi_B = 0.7         # altura de barrera Schottky (Fermi-pinning) [V]
-v_e   = 1e7         # velocidad de recombinación superficial [cm/s]
 
+# ════════════════════════════════════════════════════════════════════
+# Lectura de parámetros (parametros.txt) y constantes (constantes.txt)
+# ════════════════════════════════════════════════════════════════════
+# Formato de los .txt:  nombre = valor   # comentario
+# El valor puede ser un número o una expresión aritmética simple
+# (ej: 0.063 * 9.11e-31). Las líneas vacías y las que empiezan con
+# '#' se ignoran.
+
+_OPERADORES = {
+    ast.Add: operator.add, ast.Sub: operator.sub,
+    ast.Mult: operator.mul, ast.Div: operator.truediv,
+    ast.Pow: operator.pow, ast.USub: operator.neg, ast.UAdd: operator.pos,
+}
+
+
+def _evaluar(nodo):
+    """Evalúa de forma segura una expresión aritmética (sin usar eval)."""
+    if isinstance(nodo, ast.Constant) and isinstance(nodo.value, (int, float)):
+        return nodo.value
+    if isinstance(nodo, ast.BinOp) and type(nodo.op) in _OPERADORES:
+        return _OPERADORES[type(nodo.op)](_evaluar(nodo.left), _evaluar(nodo.right))
+    if isinstance(nodo, ast.UnaryOp) and type(nodo.op) in _OPERADORES:
+        return _OPERADORES[type(nodo.op)](_evaluar(nodo.operand))
+    raise ValueError(f"Expresión no permitida: {ast.unparse(nodo)!r}")
+
+
+def leer_txt(ruta):
+    """Lee un archivo 'nombre = valor  # comentario' y devuelve un dict."""
+    valores = {}
+    with open(ruta, encoding="utf-8") as f:
+        for num, linea in enumerate(f, start=1):
+            linea = linea.split("#", 1)[0].strip()   # saco comentarios
+            if not linea:
+                continue
+            if "=" not in linea:
+                raise ValueError(f"{ruta}:{num}: falta '=' en {linea!r}")
+            nombre, expr = (s.strip() for s in linea.split("=", 1))
+            if not nombre.isidentifier():
+                raise ValueError(f"{ruta}:{num}: nombre inválido {nombre!r}")
+            valores[nombre] = _evaluar(ast.parse(expr, mode="eval").body)
+    return valores
+
+
+_DIR = Path(__file__).resolve().parent
+_constantes = leer_txt(_DIR / "constantes.txt")
+_material   = leer_txt(_DIR / "parametros.txt")
+
+_repetidos = _constantes.keys() & _material.keys()
+if _repetidos:
+    raise ValueError(f"Parámetros definidos en ambos .txt: {sorted(_repetidos)}")
+
+# Objeto con todos los parámetros como atributos (param.mu_e, param.T, ...).
+# Se pasa como argumento a las funciones de continuidad.py, poisson.py y
+# validacion_param.py.
+param = SimpleNamespace(**_constantes, **_material)
 
 # ════════════════════════════════════════════════════════════════════
 # Magnitudes intrínsecas y de equilibrio
@@ -31,16 +85,16 @@ def calcular_nisc():
 
     n_isc = 2·(2π k_B T/h²)^(3/2) · (m_eeff·m_heff)^(3/4) · exp(−E_g/2k_BT)
     """
-    prefactor = 2 * (2 * np.pi * k_BJ * param.T / h**2)**1.5
+    prefactor = 2 * (2 * np.pi * param.k_BJ * param.T / param.h**2)**1.5
     masa      = (param.m_eeff * param.m_heff)**0.75
     E_g_J     = param.E_g * param.e
-    expon     = np.exp(-E_g_J / (2 * k_BJ * param.T))
+    expon     = np.exp(-E_g_J / (2 * param.k_BJ * param.T))
     return prefactor * masa * expon * 1e-6             # m⁻³ → cm⁻³
 
 
 def calcular_Nc():
     """Densidad efectiva de estados en la banda de conducción [cm⁻³]."""
-    return 2 * (2 * np.pi * param.m_eeff * k_BJ * param.T / h**2)**1.5 * 1e-6
+    return 2 * (2 * np.pi * param.m_eeff * param.k_BJ * param.T / param.h**2)**1.5 * 1e-6
 
 
 def n_equilibrio(C, nisc):
@@ -62,7 +116,7 @@ def phi_contacto_schottky(nisc, V_app):
     """Potencial en el contacto Schottky [V]."""
     Nc  = calcular_Nc()
     V_T = param.k_B * param.T
-    return V_T * np.log(Nc / nisc) - phi_B + V_app
+    return V_T * np.log(Nc / nisc) - param.phi_B + V_app
 
 
 def n_eq_schottky(nisc):
@@ -113,20 +167,20 @@ def simular_vapp(V_app, n_init, nisc, n0_L, phi_N, dx, dt,
     G_arr = np.broadcast_to(G, n_init.shape)
 
     n    = n_init.copy()
-    phi  = resolver_poisson(n, np.zeros_like(n), phi_0, phi_N, dx)
+    phi  = resolver_poisson(n, np.zeros_like(n), phi_0, phi_N, dx, param)
     conv = False
 
     for _ in range(max_iter):
         n_prev = n.copy()
 
         # 1. avanzar nodos interiores
-        n = paso_continuidad(n, phi, G_arr, dt, dx, v_e, n0_0, n0_L)
+        n = paso_continuidad(n, phi, G_arr, dt, dx, v_e, n0_0, n0_L, param)
 
         # 2. reemplazar n[0] con la fórmula Robin del notebook
         n[0] = bc_n_schottky(n[1], phi_0, phi[1], n0_0, dx)
 
         # 3. resolver Poisson (p=0: minoritarios despreciables en GaAs n-type)
-        phi = resolver_poisson(n, np.zeros_like(n), phi_0, phi_N, dx)
+        phi = resolver_poisson(n, np.zeros_like(n), phi_0, phi_N, dx, param)
 
         # 4. criterio de convergencia
         delta = np.max(np.abs(n - n_prev)) / (np.max(n) + 1e-30)

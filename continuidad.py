@@ -1,9 +1,8 @@
 # continuidad.py
 import numpy as np
-import parametros as param
 
 
-def paso_continuidad(n, phi, G, dt, dx, v_e, n0_0, n0_L):
+def paso_continuidad(n, phi, G, dt, dx, v_e, n0_0, n0_L, param):
     """
     Avanza un paso temporal la ecuación de continuidad de electrones
     (esquema explícito: adelante en el tiempo, centrado en el espacio).
@@ -17,11 +16,11 @@ def paso_continuidad(n, phi, G, dt, dx, v_e, n0_0, n0_L):
         v_e  : velocidad de recombinación superficial en Schottky [cm/s]
         n0_0 : densidad de equilibrio en x=0 [cm⁻³]
         n0_L : densidad de equilibrio en x=L [cm⁻³]
+        param: objeto con los parámetros leídos en main.py
+               (usa param.mu_e, param.D_e, param.tau_e)
 
     Devuelve:
         n_nuevo : array de largo N+1, densidad de electrones en t+dt [cm⁻³]
-
-    Usa de parametros.py: mu_e, D_e, tau_e
 
     Condiciones de contorno:
         x=0 (Schottky): -J_e(0) = v_e * (n_0 - n0_0)
