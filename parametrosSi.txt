@@ -1,0 +1,16 @@
+# ===================================================
+# Parámetros del Material:    |  Si (según ioffe) |
+# ===================================================
+
+mu_e = 1400                      # movilidad de los electrones [cm^2/Vs]
+D_e = 36                         # coeficiente de difusión de los electrones [cm^2/s]
+tau_e = 5e-9                     # tiempo de vida de los electrones [s]
+e = 1.602e-19                    # carga del electrón [C]
+epsilon_0 = 8.854e-14            # constante dieléctrica del vacío [F/cm]
+epsilon_r = 11.7                 # constante dieléctrica relativa
+m_eeff = 0.26 * 9.11e-31         # masa efectiva e- [kg] 
+m_heff = 0.37 * 9.11e-31         # masa efectiva h+ [kg] 
+E_g = 1.12	                 # bandgap [eV]
+C = 1e10                         # dopaje intrínseco [cm^-3]
+phi_B = 0.7                      # altura de barrera Schottky (Fermi-pinning) [V]
+v_e = 1e7                        # velocidad de recombinación superficial [cm/s]

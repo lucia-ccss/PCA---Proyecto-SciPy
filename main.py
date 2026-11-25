@@ -10,6 +10,7 @@ from pathlib import Path
 import numpy as np
 
 from lectura_parametros import cargar_parametros
+from configurar_parametros import configurar_parametros
 from validacion_param import validar
 from equilibrio import calcular_nisc, n_equilibrio
 from condiciones_contorno import phi_contacto_ohmic, phi_contacto_schottky
@@ -22,6 +23,7 @@ _DIR = Path(__file__).resolve().parent
 def main():
     # ── Parámetros ───────────────────────────────────────────────────
     param = cargar_parametros(_DIR / "constantes.txt", _DIR / "parametros.txt")
+    configurar_parametros(param)      # permite cambiar T, L, N (CLI o interactivo)
 
     dx = param.L / param.N
     dt = 0.4 * dx**2 / param.D_e
