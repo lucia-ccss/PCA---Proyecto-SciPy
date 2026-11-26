@@ -31,7 +31,9 @@ Las ecuaciones se discretizan en una grilla espacio-temporal mediante diferencia
 
 La condición inicial es la densidad de equilibrio $n_e^0(x)$ sin tensión aplicada.
 
-Para ver el detalle de las ecuaciones utilizados y modelos considerados ingresar a > Notebook: [`PLANTEO.ipynb`](PLANTEO.ipynb)
+Para ver el detalle de las ecuaciones utilizados y modelos considerados ingresar a [`PLANTEO.md`](PLANTEO.md).
+
+Para ver cómo está organizado el código y qué hace cada archivo, ver [`README2.md`](README2.md).
 
 Para este proyecto se deben instalar: numpy scipy matplotlib pydantic
 o utilizar uv
