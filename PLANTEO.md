@@ -100,7 +100,7 @@ Por los estados de superficie del GaAs, el nivel de Fermi queda anclado (Fermi-p
 $$
 n_e^0(0) = N_c\,\exp\left[-\frac{e\,\varphi_B}{k_B T}\right],
 \qquad
-N_c = 2\left[\frac{2\pi m_e^*\, k_B T}{h^2}\right]^{3/2},
+N_c = 2\left[\frac{2\pi m_e^{\ast}\, k_B T}{h^2}\right]^{3/2},
 $$
 
 con $N_c$ la densidad efectiva de estados de la banda de conducción. Usando la relación de Boltzmann, el potencial en el contacto es
@@ -138,7 +138,7 @@ $$
 y $n_{isc}$ la densidad de portadores del semiconductor intrínseco:
 
 $$
-n_{isc} = 2\left[\frac{2\pi k_B T}{h^2}\right]^{3/2}\left(m_e^*\, m_h^*\right)^{3/4} e^{-E_g / 2 k_B T}.
+n_{isc} = 2\left[\frac{2\pi k_B T}{h^2}\right]^{3/2}\left(m_e^{\ast}\, m_h^{\ast}\right)^{3/4} e^{-E_g / 2 k_B T}.
 $$
 
 La diferencia $\varphi_{bi}(L) - \phi(0) \approx 0{,}67\ \mathrm{V}$ (para $C(L) = 10^{17}\ \mathrm{cm^{-3}}$ y $V_{App}=0$) es la barrera de potencial interna de la juntura.
@@ -244,7 +244,7 @@ Se evalúa después de actualizar los nodos interiores, usando el $n_1^{m+1}$ ya
 $$
 n_e^0(0) = N_c\, \exp\left[-\frac{e\,\varphi_B}{k_B T}\right],
 \qquad
-N_c = 2\left[\frac{2\pi m_e^*\, k_B T}{h^2}\right]^{3/2}
+N_c = 2\left[\frac{2\pi m_e^{\ast}\, k_B T}{h^2}\right]^{3/2}
 $$
 
 ### Condición inicial
