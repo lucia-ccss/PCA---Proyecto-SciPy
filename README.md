@@ -2,9 +2,9 @@
 # PHOTOCONDUCTIVE ANTENNA
 ✨ Autoras ✨
 
-Lucía Cervantes Schamun
+Lucía Cervantes Schamun - lucia.cervantes@ib.edu.ar
 
-Candela Lopez Porto
+Candela Lopez Porto - candela.lopez@ib.edu.ar
 
 Qué hace el proyecto
 --------------------
