@@ -14,6 +14,16 @@ resuelve juntas la ecuación de continuidad de electrones y la de Poisson,
 avanzando en el tiempo hasta llegar al estado estacionario. Con eso
 calcula la corriente y arma la curva I-V.
 
+## Cómo correrlo
+
+```
+uv run python main.py                  # modo interactivo: muestra T, L, N y pregunta si cambiarlos
+uv run python main.py --T 350          # modo CLI: cambia T sin preguntar
+uv run python main.py --T 350 --L 2e-4 --N 300
+```
+
+La primera vez, `uv sync` crea el entorno `.venv` con las dependencias.
+
 
 Cómo está construido main.py
 ----------------------------

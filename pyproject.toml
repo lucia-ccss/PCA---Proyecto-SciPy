@@ -2,7 +2,7 @@
 name = "pca-proyecto-scipy"
 version = "0.1.0"
 description = "Add your description here"
-readme = "README.md"
+readme = "README_final.md"
 authors = [
     { name = "candelalp", email = "candelalopezporto@gmail.com" },
     { name = "Lucía Cervantes", email = "lucia.cervantes@ib.edu.ar" },
